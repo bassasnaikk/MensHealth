@@ -1,0 +1,47 @@
+import React, {useLayoutEffect, useRef, useState} from 'react';
+import {createRoot} from 'react-dom/client';
+import {createMotion} from './motion';
+import {createInteractions} from './interactions';
+import {introduction, effects, phrases, reflections, solutions} from './content';
+import './styles.css';
+
+const number = i => String(i + 1).padStart(2, '0') + '.';
+function ChapterTitle({children, blue = false}) {return <h2 aria-label={children} data-title={children} className={`chapter-title${blue ? ' blue' : ''}`}><span className="title-base" aria-hidden="true">{children}</span><span className="title-lens" aria-hidden="true">{children}</span></h2>}
+function KineticText({text}) {return text.split(" ").map((word,i) => <React.Fragment key={i}><span className="kinetic-word" aria-hidden="true"><span className="word-ink" data-word={word}>{word}</span></span>{" "}</React.Fragment>)}
+function GlyphText({text}) {return [...text].map((char,i)=><span className="type-glyph" key={i}>{char === ' ' ? '\u00a0' : char}</span>)}
+function RollText({text}) {return <span className="roll-label" aria-hidden="true"><span>{text}</span><span>{text}</span></span>}
+function Navigation() {return <header className="navigation"><a className="brand magnetic" href="#home" aria-label="Humanity First home"><RollText text="HUMANITY FIRST"/></a><nav aria-label="Main navigation">{[['#home','HOME'],['#solutions','ACTIONS'],['#awareness','STORIES']].map(([href,label])=><a className="magnetic" href={href} key={href} aria-label={label}><RollText text={label}/></a>)}</nav></header>}
+function Checklist() {
+  const [selected, setSelected] = useState([]);
+  const toggle = index => setSelected(current => current.includes(index) ? current.filter(i => i !== index) : [...current, index]);
+  return <section className="checklist" id="reflection" aria-labelledby="checklist-title"><div className="checklist-inner">
+    <h2 id="checklist-title">HOW MANY OF THESE<br/>HAVE YOU HEARD?</h2>
+    <p className="checklist-caption">Select the things someone has said to you. Or the things you’ve said to someone else.</p>
+    <fieldset><legend className="sr-only">Phrases you have heard or said</legend>{phrases.map((phrase, i) => <label key={phrase} className={`choice ${selected.includes(i) ? 'is-selected' : ''}`}><input type="checkbox" checked={selected.includes(i)} onChange={() => toggle(i)}/><span className="checkmark" aria-hidden="true">↗</span><span className="choice-copy">{phrase}</span><span className="choice-index" aria-hidden="true">{String(i+1).padStart(2,"0")}</span></label>)}</fieldset>
+    <div className="reflection-result" aria-live="polite" aria-atomic="true"><div className="counter"><span key={selected.length}>{String(selected.length).padStart(2,'0')}</span><span className="counter-total">/ 10</span></div><p>{selected.length === 0 ? 'Which of these sound familiar?' : selected.length < 4 ? 'Even familiar words are worth questioning.' : selected.length < 8 ? 'These expectations can become so familiar that we stop questioning them.' : 'You’ve heard many of these rules. That doesn’t mean you have to keep passing them on.'}</p></div>
+    <div className="checklist-bottom"><p>Your answers stay here. Nothing is collected or sent.</p><button type="button" onClick={() => setSelected([])} disabled={!selected.length}>Clear selections ↺</button></div>
+  </div></section>
+}
+function App() {
+  const root = useRef(null);
+  useLayoutEffect(() => {
+    let cleanup;
+    let disposed = false;
+    document.fonts.ready.then(() => {
+      if (disposed) return;
+      const stopMotion = createMotion(root.current);
+      const stopInteractions = createInteractions(root.current);
+      cleanup = () => {stopInteractions(); stopMotion()};
+    });
+    return () => {disposed = true; cleanup?.()};
+  }, []);
+  return <div ref={root} id="home"><a className="skip-link" href="#introduction">Skip to content</a><Navigation/><div className="pointer-orbit" aria-hidden="true"/><div className="scroll-progress" aria-hidden="true"><span/></div><main>
+    <section className="hero" aria-labelledby="hero-title"><div className="hero-content"><p className="hero-eyebrow">A CONVERSATION WE SHOULD’VE HAD A LONG TIME AGO.</p><h1 id="hero-title" aria-label="WHO MADE THE RULES?"><span className="hero-line" aria-hidden="true"><span><GlyphText text="WHO MADE"/></span></span><span className="hero-line" aria-hidden="true"><span><GlyphText text="THE RULES?"/></span></span></h1><div className="hero-bottom"><p>Men should be strong and provide. But who defines a man? <br/>What if he doesn’t fit that?</p><a className="button magnetic" href="#introduction" aria-label="LET’S TALK ABOUT IT"><RollText text="LET’S TALK ABOUT IT"/><span className="button-arrow" aria-hidden="true">↘</span></a></div></div><a href="#introduction" className="scroll-cue" aria-label="Scroll to introduction"><span>SCROLL TO QUESTION</span><span aria-hidden="true">↓</span></a></section>
+    <section className="introduction section-pad" id="introduction" aria-labelledby="intro-title"><h2 id="intro-title">INTRODUCTION:</h2><h3>A world made by men. But is it made for men?</h3><ul className="intro-list">{introduction.map((line,i) => <li key={line}>{i === 4 ? <strong>{line}</strong> : line}</li>)}</ul></section>
+    <section className="effects" id="effects" aria-label="Effects of expectations"><div className="effects-opening"><ChapterTitle>EFFECTS</ChapterTitle><div className="effects-intro"><h3 aria-label="YOU’RE A MAN. ACT LIKE ONE."><KineticText text="YOU’RE A MAN. ACT LIKE ONE."/></h3><p>Sounds familiar?<br/>Four words. A lifetime of expectations.<br/>From childhood to adulthood, men are taught what being a “real man” means.<br/>And sometimes, the lessons stick longer than we realize.</p><span className="down-arrow" aria-hidden="true">↓</span></div></div><div className="effect-viewport"><div className="effect-list">{effects.map((item,i) => <article className={`effect effect-${i}`} key={item.title}><div className="effect-heading"><span className="item-number">{number(i)}</span><h3 aria-label={item.title}><KineticText text={item.title}/></h3></div><span className="pressure-echo" aria-hidden="true">{item.title}</span><div className="effect-copy"><p>{item.body}</p><p className="effect-question">{item.question}</p></div></article>)}</div></div></section>
+    <section className="awareness" id="awareness" aria-label="Awareness"><div className="awareness-opening"><ChapterTitle>AWARENESS</ChapterTitle><h3 className="awareness-question" aria-label="WHAT IF EVERYTHING YOU’VE BEEN TAUGHT ABOUT BEING A MAN ISN’T ENTIRELY TRUE?"><KineticText text="WHAT IF EVERYTHING YOU’VE BEEN TAUGHT ABOUT BEING A MAN ISN’T ENTIRELY TRUE?"/></h3></div><div className="awareness-copy"><div className="reading-group"><p>We’re not born believing that boys shouldn’t cry.</p><p>We’re not born thinking money determines our worth.</p><p>And we’re certainly not born knowing which emotions are acceptable for our gender.</p></div><div className="reading-group"><p>We learn these things.</p><p>From families. From schools. From friends. From films. From society.</p><p>And sometimes, without realizing it, we pass those same lessons on to someone else.</p></div><p>It starts with the smallest things.</p><div className="reflection-pairs">{reflections.map(([situation,quote]) => <div className="reflection-pair" key={situation}><p>{situation}</p><blockquote><span className="quote-ink">{quote}</span></blockquote></div>)}</div><div className="reading-group awareness-conclusion"><p>Different ages. Different situations.</p><p>The same message.</p><p>Your feelings matter less than what society expects you to be.</p></div></div></section>
+    <Checklist/>
+    <section className="solutions" id="solutions" aria-label="Solutions"><ChapterTitle blue>SOLUTIONS</ChapterTitle><h3 className="solutions-question">SO, WHAT DO WE DO ABOUT IT?</h3><p className="solutions-intro">WE CAN’T UNDO GENERATIONS OF EXPECTATIONS OVERNIGHT.<br/>BUT WE CAN START QUESTIONING THEM.<br/>WE CAN CHANGE THE WAY WE SPEAK, THE WAY WE RAISE CHILDREN, THE WAY WE TREAT OUR FRIENDS, AND THE WAY WE DEFINE MASCULINITY.<br/>AND NONE OF THAT REQUIRES MEN TO STOP BEING MEN.<br/>IT SIMPLY MEANS ALLOWING MEN TO BE HUMAN.</p><div className="solution-deck"><div className="solution-list">{solutions.map((item,i) => <article className="solution" key={item.title}><span className="solution-number" aria-hidden="true"><span className="number-ink">{number(i)}</span></span><div className="solution-body"><h3><span className="sr-only">{number(i)} </span>{item.title}</h3><div className="solution-copy">{item.lines.map(line => <p key={line}>{line}</p>)}</div></div></article>)}</div></div><div className="final-scene"><div className="final-curtain" aria-hidden="true"/><p className="final-statement" aria-label="MAYBE IT’S TIME TO REWRITE THE RULES."><span aria-hidden="true">MAYBE IT’S TIME TO</span><span className="rewrite" aria-hidden="true">{[..."REWRITE THE RULES."].map((char,i) => <span className="rewrite-char" key={i}><span className="type-glyph">{char === " " ? "\u00a0" : char}</span></span>)}</span></p></div></section>
+  </main><footer><p>THE RULES<br/>WE LIVE<br/>BY</p><a href="#home" className="footer-brand magnetic" aria-label="Humanity First, back to top"><span className="brand">HUMANITY FIRST</span><span className="back-top">BACK TO TOP ↑</span></a></footer></div>
+}
+createRoot(document.getElementById('root')).render(<App/>);
